@@ -88,10 +88,28 @@ migrate: ## Run Alembic migrations for every service that defines them (D1+). No
 		fi; \
 	done
 
+# ---------------------------------------------------------------------------
+# Z1 — seed + demo orchestration. These drive the RUNNING compose stack
+# (`make up` first), so they need Docker; that is intentional (the live demo).
+#   * `seed` first seeds the governance control-plane (tenant `acme` + the five
+#     roles + the static calibration prior) via the governance seeder, then loads
+#     ~90 days of correlated history through the L1 ingest control API.
+#   * `demo` injects the `revenue_drop_emea` scenario 7 days ago through the same
+#     control API, polls the gateway for the resulting anomaly + recommendation,
+#     and prints the end-to-end story + the grounded copilot answer.
+# Both target URLs come from EDIS_* env (EDIS_INGEST_BASE_URL / EDIS_GATEWAY_BASE_URL),
+# defaulting to the compose port mappings (ingestion 8001, gateway 8000).
+# ---------------------------------------------------------------------------
 .PHONY: seed
 seed: ## Seed tenants, roles, calibration prior, and 90-day history (scripts/seed_demo.py — Z1).
+	@if [ -f services/governance/app/seed/seed.py ]; then \
+		echo ">>> governance seed (tenant acme + roles + calibration prior)"; \
+		( cd services/governance && $(PYTHON) -m app.seed.seed ) || exit 1; \
+	else \
+		echo "--- skip governance seed (not built yet)"; \
+	fi
 	@if [ -f scripts/seed_demo.py ]; then \
-		$(PYTHON) scripts/seed_demo.py; \
+		$(PYTHON) scripts/seed_demo.py seed; \
 	else \
 		echo "scripts/seed_demo.py not built yet (work unit Z1)."; \
 	fi
@@ -99,7 +117,7 @@ seed: ## Seed tenants, roles, calibration prior, and 90-day history (scripts/see
 .PHONY: demo
 demo: ## Run the revenue_drop_emea scenario and drive the full chain (Z1).
 	@if [ -f scripts/seed_demo.py ]; then \
-		$(PYTHON) scripts/seed_demo.py --demo revenue_drop_emea; \
+		$(PYTHON) scripts/seed_demo.py demo --scenario revenue_drop_emea; \
 	else \
 		echo "demo orchestration not built yet (work unit Z1)."; \
 	fi

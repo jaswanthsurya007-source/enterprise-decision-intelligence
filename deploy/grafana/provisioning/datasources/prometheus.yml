@@ -1,0 +1,24 @@
+# Grafana datasource provisioning (Z2).
+#
+# Auto-registers the EDIS Prometheus as the default datasource on Grafana start,
+# so the provisioned dashboards under deploy/grafana/dashboards resolve their
+# `${DS_PROMETHEUS}` / default datasource references without manual setup.
+#
+# Prometheus runs at http://prometheus:9090 on the `edis` docker network and
+# scrapes the otel-collector's Prometheus exporter (:8889) where every EDIS
+# service's OTLP metrics are re-exposed (see deploy/prometheus/prometheus.yml +
+# deploy/otel-collector/config.yaml).
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: edis-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s

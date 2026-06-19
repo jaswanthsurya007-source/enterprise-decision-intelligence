@@ -1,0 +1,157 @@
+{
+  "__comment": "EDIS Z2 streaming dashboard. Consumer lag comes from Redpanda's native Prometheus metrics scraped at redpanda:9644 (job 'redpanda' in deploy/prometheus/prometheus.yml). redpanda_kafka_consumer_group_lag_sum{redpanda_group,redpanda_topic} is the standard Redpanda lag gauge. Processing latency is an EDIS app metric exported via OTel: edis_processing_latency_seconds is a histogram (OTel histograms export <name>_bucket/_sum/_count to Prometheus), so p95 is a histogram_quantile over _bucket. ASPIRATIONAL: edis_processing_latency_seconds is named sensibly; the per-stage meter call sites are stubs in the MVP and resolve to no data until wired.",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Per-topic consumer-group lag (sum of un-consumed offsets) from Redpanda. Sustained growth means a consumer (integration / intelligence / decision / gateway bridge) is falling behind.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "messages",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1000 },
+              { "color": "red", "value": 10000 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "legend": { "calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (redpanda_topic, redpanda_group) (redpanda_kafka_consumer_group_lag_sum)",
+          "legendFormat": "{{redpanda_group}} · {{redpanda_topic}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Consumer lag per topic (Redpanda)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "p95 stream-processing latency per stage, from the edis_processing_latency_seconds histogram.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "id": 2,
+      "options": {
+        "legend": { "calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(edis_processing_latency_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "p95 · {{stage}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Processing latency p95 (by stage)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Mean stream-processing latency per stage (histogram _sum / _count).",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "seconds",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "id": 3,
+      "options": {
+        "legend": { "calcs": ["lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (stage) (rate(edis_processing_latency_seconds_sum[$__rate_interval])) / clamp_min(sum by (stage) (rate(edis_processing_latency_seconds_count[$__rate_interval])), 1)",
+          "legendFormat": "mean · {{stage}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Processing latency mean (by stage)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["edis", "streaming", "redpanda"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "EDIS · Streaming & Consumer Lag",
+  "uid": "edis-streaming",
+  "version": 1,
+  "weekStart": ""
+}

@@ -205,6 +205,10 @@ services:
     volumes:
       - grafanadata:/var/lib/grafana
       # Provisioning + dashboards are added by Z2; mounted read-only when present.
+      # Provisioning auto-registers the Prometheus datasource + a file-based
+      # dashboard provider that loads every JSON under .../dashboards into the
+      # "EDIS" folder on startup.
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks: [edis]
     depends_on:

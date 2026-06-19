@@ -1,0 +1,243 @@
+{
+  "__comment": "EDIS Z2 AI copilot dashboard. Metric names: llm_tokens_total{model,type} is the canonical token counter named in deploy/prometheus/prometheus.yml; 'type' splits input/output/cache_read tokens (matching anthropic usage fields used by services/copilot budget/accounting.py CostModel.usd_from_usage). cache_hit_ratio and grounding_pass_rate are the canonical ratio gauges named in prometheus.yml. Estimated LLM cost is computed in PromQL from llm_tokens_total using the per-MTok pricing fixed in docs/ARCHITECTURE.md §7 and budget/accounting.py _PRICE_PER_MTOK: opus $5 in / $25 out, haiku $1 in / $5 out. ASPIRATIONAL note: the copilot tracks USD cost in Redis via the budget accountant but does not yet register llm_tokens_total / cache_hit_ratio / grounding_pass_rate as OTel instruments in the MVP (the meter call sites are stubs) -- panels resolve to no data until wired. Names are chosen to match the prometheus.yml contract so wiring is a drop-in.",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Token throughput per model, split by token type (input / output / cache_read).",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "tokens/s",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "normal" }
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (model, type) (rate(llm_tokens_total[$__rate_interval]))",
+          "legendFormat": "{{model}} · {{type}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "LLM tokens/s (llm_tokens_total by model & type)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Estimated LLM spend rate, computed from llm_tokens_total at the §7 pricing: opus $5/MTok in, $25/MTok out; haiku $1/MTok in, $5/MTok out. cache_read tokens are billed as input here (conservative; cache reads are actually discounted).",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "USD/hour",
+            "drawStyle": "bars",
+            "fillOpacity": 40,
+            "lineWidth": 1,
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "normal" }
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": {
+        "legend": { "calcs": ["lastNotNull", "sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "sum(rate(llm_tokens_total{model=\"claude-opus-4-8\", type=~\"input|cache_read\"}[$__rate_interval])) * 3600 * 5 / 1e6\n+ sum(rate(llm_tokens_total{model=\"claude-opus-4-8\", type=\"output\"}[$__rate_interval])) * 3600 * 25 / 1e6",
+          "legendFormat": "opus",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "sum(rate(llm_tokens_total{model=\"claude-haiku-4-5\", type=~\"input|cache_read\"}[$__rate_interval])) * 3600 * 1 / 1e6\n+ sum(rate(llm_tokens_total{model=\"claude-haiku-4-5\", type=\"output\"}[$__rate_interval])) * 3600 * 5 / 1e6",
+          "legendFormat": "haiku",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Estimated LLM cost (USD/hour, by model)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Prompt cache effectiveness: cache_read input tokens as a share of all input tokens. The copilot asserts usage.cache_read_input_tokens > 0 after warm-up (frozen tool order + >=4096-token cached prefix on Opus 4.8, see §5.5).",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.2 },
+              { "color": "green", "value": 0.5 }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 9 },
+      "id": 3,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "cache_hit_ratio",
+          "legendFormat": "cache hit ratio",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Prompt cache hit ratio",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Fraction of narrated/answered turns whose every numeric claim matched a computed/retrieved fact (the grounding guarantee, §5.3 / §5.5). Should sit at ~1.0; dips mean the grounding verifier is stripping figures.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.9 },
+              { "color": "green", "value": 0.99 }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 9 },
+      "id": 4,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "grounding_pass_rate",
+          "legendFormat": "grounding pass rate",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Grounding pass rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+      "description": "Cumulative tokens consumed over the dashboard range, per model.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 9 },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "edis-prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (model) (increase(llm_tokens_total[$__range]))",
+          "legendFormat": "{{model}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Tokens consumed (range total, by model)",
+      "type": "stat"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["edis", "copilot", "llm"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "EDIS · AI Copilot (LLM cost & grounding)",
+  "uid": "edis-ai-copilot",
+  "version": 1,
+  "weekStart": ""
+}

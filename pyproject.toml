@@ -92,6 +92,7 @@ asyncio_mode = "auto"
 # they aren't otherwise importable). The module names are globally unique, so
 # placing their dirs on the import path is collision-free.
 pythonpath = [
+    ".",
     "services/gateway/tests",
     "services/copilot/tests/unit",
 ]
@@ -101,6 +102,8 @@ testpaths = [
     "libs/edis-governance-sdk/tests",
     "apps/ingestion/tests",
     "services",
+    "scripts/tests",
+    "tests",
 ]
 # import-mode=importlib lets the monorepo's per-package tests/ dirs (which are NOT
 # Python packages — no __init__.py) coexist without the duplicate-"tests"-package
