@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ingestion"
+version = "0.1.0"
+description = "EDIS L1 — Data Ingestion. The edge of trust: validate@edge → dedupe → land (outbox) → publish, with DLQ, a seedable simulator, and a chunked batch loader. One normalization core, two ingress modes."
+requires-python = ">=3.12"
+dependencies = [
+    # web framework
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    # database (async) + migrations
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "greenlet",
+    "alembic>=1.13",
+    # event bus + dedupe backends
+    "redis>=5.0",
+    "aiokafka>=0.11",
+    "httpx>=0.27",
+    # cli
+    "typer>=0.12",
+    # simulator / batch
+    "numpy>=1.26",
+    "pandas>=2.2",
+]
+
+[project.optional-dependencies]
+parquet = ["pyarrow>=16.0"]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "testcontainers[postgres]>=4.0",
+]
+
+[project.scripts]
+dil = "ingestion.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ingestion"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "integration: requires real infra (Postgres/Redpanda/Redis); skipped in the unit suite",
+]

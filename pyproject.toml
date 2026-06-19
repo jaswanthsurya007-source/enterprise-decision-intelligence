@@ -91,6 +91,7 @@ testpaths = [
     "libs/edis-contracts/tests",
     "libs/edis-platform/tests",
     "libs/edis-governance-sdk/tests",
+    "apps/ingestion/tests",
     "services",
 ]
 # import-mode=importlib lets the monorepo's per-package tests/ dirs (which are NOT

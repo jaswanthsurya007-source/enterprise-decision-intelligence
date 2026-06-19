@@ -12,6 +12,14 @@ The registry is keyed by ``id(settings)`` so independent ``Settings`` instances
 (e.g. separate tests) get isolated brokers, while a shared settings object lets a
 publisher and a consumer in the same process find each other.
 
+``subscribe`` registers the group's queues **eagerly, at call time** (it is a
+plain method that returns an async iterator, per the :class:`MessageSource`
+contract -- not an ``async def`` generator whose body would run lazily on the
+first ``__anext__``). This means the natural ``subscribe -> publish -> consume``
+pattern delivers the message: any publish *after* the ``subscribe`` call lands in
+the already-registered queue. (A publish *before* ``subscribe`` is at-most-once
+and not delivered, exactly like joining a live topic.)
+
 Example::
 
     from edis_platform.settings import Settings
@@ -23,7 +31,7 @@ Example::
     sink, source = make_sink(settings), make_source(settings)
     await sink.start()
     await source.start()
-    stream = source.subscribe([topics.METRICS_POINTS], group="demo")
+    stream = source.subscribe([topics.METRICS_POINTS], group="demo")  # queue registered now
     await sink.publish(topics.METRICS_POINTS, key="t1:revenue",
                        value=MetricPoint(tenant_id="t1", metric_key="revenue",
                                          ts=..., value=42.0, source="demo"))
@@ -49,34 +57,30 @@ if TYPE_CHECKING:
 class _Broker:
     """Per-settings in-process broker: topic -> {group -> shared queue}.
 
-    Subscriptions are registered lazily on first ``subscribe`` so a publisher
-    started before any consumer simply has no group to deliver to (at-most-once
-    for messages predating a subscription -- the expected pub/sub semantic).
+    Queue registration is synchronous so ``subscribe`` can register a group's
+    queue the instant it is called (before any publish). This is safe because the
+    asyncio event loop is single-threaded: the ``dict`` mutations below never
+    interleave with an ``await``.
     """
 
     def __init__(self) -> None:
         # topic -> group -> queue shared by all consumers in that group
         self._queues: dict[str, dict[str, asyncio.Queue[Message]]] = {}
-        self._lock = asyncio.Lock()
 
-    async def get_group_queue(self, topic: str, group: str) -> asyncio.Queue[Message]:
+    def get_group_queue(self, topic: str, group: str) -> asyncio.Queue[Message]:
         """Return (creating if needed) the shared queue for ``(topic, group)``."""
 
-        async with self._lock:
-            groups = self._queues.setdefault(topic, {})
-            queue = groups.get(group)
-            if queue is None:
-                queue = asyncio.Queue()
-                groups[group] = queue
-            return queue
+        groups = self._queues.setdefault(topic, {})
+        queue = groups.get(group)
+        if queue is None:
+            queue = asyncio.Queue()
+            groups[group] = queue
+        return queue
 
-    async def publish(self, message: Message) -> None:
+    def publish(self, message: Message) -> None:
         """Fan the message out to one queue per subscribed group."""
 
-        async with self._lock:
-            groups = self._queues.get(message.topic, {})
-            targets = list(groups.values())
-        for queue in targets:
+        for queue in list(self._queues.get(message.topic, {}).values()):
             queue.put_nowait(message)
 
 
@@ -118,7 +122,7 @@ class InProcEventSink(EventSink):
         # Round-trip through JSON so consumers always receive a plain dict,
         # exactly as the Kafka/Redis backends deliver it.
         decoded = json.loads(_serialize(value).decode("utf-8"))
-        await self._broker.publish(Message(topic=topic, key=key, value=decoded, headers={}))
+        self._broker.publish(Message(topic=topic, key=key, value=decoded, headers={}))
 
 
 class InProcMessageSource(MessageSource):
@@ -138,39 +142,46 @@ class InProcMessageSource(MessageSource):
         self._started = False
         self._stopped.set()
 
-    async def subscribe(self, topics: list[str], group: str) -> AsyncIterator[Message]:
-        """Yield messages from ``topics`` for ``group`` until :meth:`stop`.
+    def subscribe(self, topics: list[str], group: str) -> AsyncIterator[Message]:
+        """Return an async iterator of messages from ``topics`` for ``group``.
 
-        Registers the group's queues eagerly so messages published after this
-        call are delivered, then multiplexes all subscribed topic queues. A
-        single long-lived ``get`` task is kept per queue so no dequeued message
-        is ever lost to cancellation between iterations.
+        The group's queues are registered **now** (synchronously, before this
+        method returns), so a publish that happens after this call -- but before
+        the first ``__anext__`` -- is still delivered. The returned async
+        generator multiplexes the subscribed topic queues, keeping one in-flight
+        ``get`` per queue so no dequeued message is lost to cancellation between
+        iterations, and exits cleanly on :meth:`stop` or cancellation.
         """
 
-        queues = [await self._broker.get_group_queue(t, group) for t in topics]
-        stop_task = asyncio.create_task(self._stopped.wait())
-        # One in-flight get() per queue, recreated only after it resolves.
-        get_tasks: dict[asyncio.Task[Message], asyncio.Queue[Message]] = {
-            asyncio.create_task(q.get()): q for q in queues
-        }
-        try:
-            while not self._stopped.is_set():
-                done, _ = await asyncio.wait(
-                    [*get_tasks, stop_task],
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-                if stop_task in done:
-                    break
-                for task in list(done):
-                    if task is stop_task:
-                        continue
-                    queue = get_tasks.pop(task)
-                    message = task.result()
-                    # Re-arm this queue before yielding so concurrent publishes
-                    # keep flowing while the consumer processes the message.
-                    get_tasks[asyncio.create_task(queue.get())] = queue
-                    yield message
-        finally:
-            stop_task.cancel()
-            for task in get_tasks:
-                task.cancel()
+        queues = [self._broker.get_group_queue(t, group) for t in topics]
+        stopped = self._stopped
+
+        async def _iter() -> AsyncIterator[Message]:
+            stop_task = asyncio.create_task(stopped.wait())
+            # One in-flight get() per queue, recreated only after it resolves.
+            get_tasks: dict[asyncio.Task[Message], asyncio.Queue[Message]] = {
+                asyncio.create_task(q.get()): q for q in queues
+            }
+            try:
+                while not stopped.is_set():
+                    done, _ = await asyncio.wait(
+                        [*get_tasks, stop_task],
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                    if stop_task in done:
+                        break
+                    for task in list(done):
+                        if task is stop_task:
+                            continue
+                        queue = get_tasks.pop(task)
+                        message = task.result()
+                        # Re-arm this queue before yielding so concurrent publishes
+                        # keep flowing while the consumer processes the message.
+                        get_tasks[asyncio.create_task(queue.get())] = queue
+                        yield message
+            finally:
+                stop_task.cancel()
+                for task in get_tasks:
+                    task.cancel()
+
+        return _iter()
