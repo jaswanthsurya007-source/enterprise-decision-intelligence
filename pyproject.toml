@@ -87,6 +87,14 @@ warn_required_dynamic_aliases = true
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Uniquely-named test-helper modules live alongside the gateway/copilot suites
+# (the monorepo keeps tests dirs as non-packages under importlib import mode, so
+# they aren't otherwise importable). The module names are globally unique, so
+# placing their dirs on the import path is collision-free.
+pythonpath = [
+    "services/gateway/tests",
+    "services/copilot/tests/unit",
+]
 testpaths = [
     "libs/edis-contracts/tests",
     "libs/edis-platform/tests",

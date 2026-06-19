@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "edis-copilot"
+version = "0.1.0"
+description = "EDIS L5 AI Copilot service — read-only, tenant-scoped tools (metric_lookup, structured_query, find_anomalies, semantic_search), voyage-3 + pgvector retrieval, a frozen Anthropic tool-schema registry, and a lazy key-guarded Claude client seam with a fully offline deterministic fallback. P1 builds the data/tool layer; the agent loop (P2) sits on top."
+requires-python = ">=3.12"
+# THIRD-PARTY ONLY. Sibling local packages (edis-contracts, edis-platform,
+# edis-governance-sdk) are never listed here — they are not on PyPI; the
+# Makefile/Dockerfile/CI install them with `pip install -e` in dependency order.
+# Import them normally in code. SSE uses FastAPI's StreamingResponse (no extra dep).
+dependencies = [
+    "anthropic>=0.40",
+    "voyageai>=0.3",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    "aiokafka>=0.11",
+    "redis>=5.0",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "testcontainers[postgres]>=4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+# The importable package is ``edis_copilot`` under services/copilot. The import
+# name is unique per distribution (governance already owns the top-level ``app``
+# name); two installed editable services cannot both expose a top-level ``app``
+# package, so the copilot wheel ships exactly the ``edis_copilot`` package.
+packages = ["edis_copilot"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "integration: tests that require Docker (Postgres/pgvector/Kafka) — skipped by default",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
