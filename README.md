@@ -12,9 +12,8 @@
 [![python](https://img.shields.io/badge/python-3.12-blue)](#tech-stack)
 [![license](https://img.shields.io/badge/status-portfolio%20MVP-blue)](#what-is-built-mvp-vs-designed-but-stubbed-future)
 
-**Author:** [**C V Jaswanth Surya**](https://github.com/jaswanthsurya007-source) — designed and built end-to-end, layer by layer, with a test-first workflow.
 
----
+
 
 ## The problem
 
