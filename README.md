@@ -6,11 +6,13 @@
 > answers _"Why did revenue drop last week?"_ in natural language — with **every number
 > traced to a computed fact, never invented by an LLM.**
 
-[![tests](https://img.shields.io/badge/python%20tests-511%20passing-brightgreen)](#testing)
+[![tests](https://img.shields.io/badge/python%20tests-523%20passing-brightgreen)](#testing)
 [![e2e](https://img.shields.io/badge/full--chain%20e2e-passing-brightgreen)](#testing)
 [![frontend](https://img.shields.io/badge/vitest-35%20passing-brightgreen)](#testing)
 [![python](https://img.shields.io/badge/python-3.12-blue)](#tech-stack)
 [![license](https://img.shields.io/badge/status-portfolio%20MVP-blue)](#what-is-built-mvp-vs-designed-but-stubbed-future)
+
+**Author:** [**C V Jaswanth Surya**](https://github.com/jaswanthsurya007-source) — designed and built end-to-end, layer by layer, with a test-first workflow.
 
 ---
 
@@ -243,7 +245,7 @@ make test-integration  # the Docker-backed suite (requires `make up` first)
 cd apps/web && npm test # frontend vitest
 ```
 
-- **~511 Python unit tests** — contracts, platform SDK, every layer's pure logic, the
+- **523 Python unit tests** — contracts, platform SDK, every layer's pure logic, the
   grounding guards, the simulator's anomaly correctness, and the deterministic offline copilot.
 - **The full-chain e2e** — [`tests/e2e/test_full_chain.py`](tests/e2e/test_full_chain.py)
   wires the **actual pure entrypoint of every layer** into one in-process run (no Docker, no
