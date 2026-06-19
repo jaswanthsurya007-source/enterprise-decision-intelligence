@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "edis-decision"
+version = "0.1.0"
+description = "EDIS L4 Decision Engine — consume edis.findings.v1, classify a playbook intent (Haiku 4.5 structured output, with a deterministic rule-based fallback), bind a typed ActionTemplate, retrieve numeric facts, and compute a DETERMINISTIC ImpactEstimate + ConfidenceScore + priority, then persist + publish a Recommendation and manage its lifecycle. ALL numbers come from unit-tested code, never the LLM; the engine works fully with no ANTHROPIC_API_KEY. Alembic migrations for recommendation / recommendation_lifecycle / outcome_report / calibration_prior."
+requires-python = ">=3.12"
+# THIRD-PARTY ONLY. Sibling local packages (edis-contracts, edis-platform,
+# edis-governance-sdk) are never listed here — they are not on PyPI; the
+# Makefile/Dockerfile/CI install them with `pip install -e` in dependency order.
+# Import them normally in code.
+dependencies = [
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "aiokafka>=0.11",
+    "redis>=5.0",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    "anthropic>=0.40",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "testcontainers[postgres]>=4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+# The L4 service package (SRC layout, import name ``decision_engine``).
+packages = ["src/decision_engine"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
