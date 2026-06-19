@@ -1,0 +1,219 @@
+{
+  "$defs": {
+    "CanonicalOrderLine": {
+      "properties": {
+        "canonical_product_id": {
+          "format": "uuid",
+          "title": "Canonical Product Id",
+          "type": "string"
+        },
+        "line_amount_base": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Line Amount Base"
+        },
+        "qty": {
+          "title": "Qty",
+          "type": "integer"
+        },
+        "sku": {
+          "title": "Sku",
+          "type": "string"
+        },
+        "unit_price_base": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Unit Price Base"
+        }
+      },
+      "required": [
+        "canonical_product_id",
+        "sku",
+        "qty",
+        "unit_price_base",
+        "line_amount_base"
+      ],
+      "title": "CanonicalOrderLine",
+      "type": "object"
+    },
+    "SourceRef": {
+      "description": "Provenance back-link from a canonical row to a source record.",
+      "properties": {
+        "match_confidence": {
+          "default": 1.0,
+          "title": "Match Confidence",
+          "type": "number"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_system": {
+          "title": "Source System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_system",
+        "source_id",
+        "schema_version"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "description": "Immutable sales fact, normalized to a single base currency.",
+  "properties": {
+    "amount_base": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Amount Base"
+    },
+    "amount_src": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Amount Src"
+    },
+    "canonical_customer_id": {
+      "format": "uuid",
+      "title": "Canonical Customer Id",
+      "type": "string"
+    },
+    "canonical_order_id": {
+      "format": "uuid",
+      "title": "Canonical Order Id",
+      "type": "string"
+    },
+    "channel": {
+      "anyOf": [
+        {
+          "enum": [
+            "web",
+            "partner",
+            "direct"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Channel"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "currency_base": {
+      "const": "USD",
+      "default": "USD",
+      "title": "Currency Base",
+      "type": "string"
+    },
+    "currency_src": {
+      "title": "Currency Src",
+      "type": "string"
+    },
+    "fx_rate": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Fx Rate"
+    },
+    "line_items": {
+      "items": {
+        "$ref": "#/$defs/CanonicalOrderLine"
+      },
+      "title": "Line Items",
+      "type": "array"
+    },
+    "order_ts": {
+      "format": "date-time",
+      "title": "Order Ts",
+      "type": "string"
+    },
+    "record_hash": {
+      "title": "Record Hash",
+      "type": "string"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "canonical_order_id",
+    "tenant_id",
+    "canonical_customer_id",
+    "order_ts",
+    "amount_base",
+    "amount_src",
+    "currency_src",
+    "fx_rate",
+    "line_items",
+    "source_refs",
+    "record_hash",
+    "created_at"
+  ],
+  "title": "CanonicalOrder",
+  "type": "object"
+}

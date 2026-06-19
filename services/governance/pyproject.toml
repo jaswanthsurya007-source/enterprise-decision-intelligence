@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "edis-governance"
+version = "0.1.0"
+description = "EDIS L7 Governance service — FastAPI app (audit/lineage consumers, explainability store, static-RBAC admin) plus the Alembic migrations (D1) for the append-only audit_log hypertable, lineage_edge graph, explainability store (decision/evidence), and control-plane tables (tenant/app_role/permission/calibration_prior)."
+requires-python = ">=3.12"
+# THIRD-PARTY ONLY. Sibling local packages (edis-contracts, edis-platform,
+# edis-governance-sdk) are never listed here — they are not on PyPI; the
+# Makefile/Dockerfile/CI install them with `pip install -e` in dependency order.
+dependencies = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "greenlet",
+    "alembic>=1.13",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "httpx>=0.27",
+    "aiokafka>=0.11",
+    "redis>=5.0",
+    "pyjwt>=2.8",
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+    "opentelemetry-exporter-otlp>=1.25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "testcontainers[postgres]>=4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+# The governance application package (migrations live under app/migrations).
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

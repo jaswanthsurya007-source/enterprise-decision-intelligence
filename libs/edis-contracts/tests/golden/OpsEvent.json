@@ -1,0 +1,133 @@
+{
+  "$defs": {
+    "SourceRef": {
+      "description": "Provenance back-link from a canonical row to a source record.",
+      "properties": {
+        "match_confidence": {
+          "default": 1.0,
+          "title": "Match Confidence",
+          "type": "number"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_system": {
+          "title": "Source System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_system",
+        "source_id",
+        "schema_version"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "description": "Immutable operations fact -- feeds error_rate / latency_p95 metrics.",
+  "properties": {
+    "canonical_ops_event_id": {
+      "format": "uuid",
+      "title": "Canonical Ops Event Id",
+      "type": "string"
+    },
+    "event_ts": {
+      "format": "date-time",
+      "title": "Event Ts",
+      "type": "string"
+    },
+    "latency_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latency Ms"
+    },
+    "level": {
+      "enum": [
+        "info",
+        "warn",
+        "error"
+      ],
+      "title": "Level",
+      "type": "string"
+    },
+    "message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Message"
+    },
+    "record_hash": {
+      "title": "Record Hash",
+      "type": "string"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    },
+    "service": {
+      "title": "Service",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "status_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status Code"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "canonical_ops_event_id",
+    "tenant_id",
+    "service",
+    "level",
+    "event_ts",
+    "source_refs",
+    "record_hash"
+  ],
+  "title": "OpsEvent",
+  "type": "object"
+}

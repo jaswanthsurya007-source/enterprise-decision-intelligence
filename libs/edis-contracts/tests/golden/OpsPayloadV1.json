@@ -1,0 +1,79 @@
+{
+  "additionalProperties": false,
+  "description": "Validated operations-log record (feeds error_rate / latency_p95).",
+  "properties": {
+    "event_ts": {
+      "format": "date-time",
+      "title": "Event Ts",
+      "type": "string"
+    },
+    "latency_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Latency Ms"
+    },
+    "level": {
+      "default": "info",
+      "enum": [
+        "info",
+        "warn",
+        "error"
+      ],
+      "title": "Level",
+      "type": "string"
+    },
+    "message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Message"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    },
+    "service": {
+      "title": "Service",
+      "type": "string"
+    },
+    "status_code": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Status Code"
+    }
+  },
+  "required": [
+    "service",
+    "event_ts"
+  ],
+  "title": "OpsPayloadV1",
+  "type": "object"
+}

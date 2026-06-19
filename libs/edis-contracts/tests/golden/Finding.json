@@ -1,0 +1,236 @@
+{
+  "$defs": {
+    "CandidateCause": {
+      "description": "A lag-adjusted, ranked correlate of an anomaly (RCA output).",
+      "properties": {
+        "contribution_pct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contribution Pct"
+        },
+        "correlation": {
+          "title": "Correlation",
+          "type": "number"
+        },
+        "dimensions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Dimensions",
+          "type": "object"
+        },
+        "direction": {
+          "enum": [
+            "leading",
+            "coincident",
+            "lagging"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "lag_minutes": {
+          "title": "Lag Minutes",
+          "type": "integer"
+        },
+        "metric_key": {
+          "title": "Metric Key",
+          "type": "string"
+        },
+        "observed_delta": {
+          "title": "Observed Delta",
+          "type": "number"
+        }
+      },
+      "required": [
+        "metric_key",
+        "correlation",
+        "lag_minutes",
+        "direction",
+        "observed_delta"
+      ],
+      "title": "CandidateCause",
+      "type": "object"
+    },
+    "FindingKind": {
+      "enum": [
+        "point_anomaly",
+        "seasonal_break",
+        "level_shift",
+        "trend_break",
+        "forecast_breach",
+        "root_cause"
+      ],
+      "title": "FindingKind",
+      "type": "string"
+    }
+  },
+  "description": "Payload of ``edis.findings.v1`` -- an atomic, computed detection.\n\n``observed_value``/``expected_value``/``deviation`` are computed and the LLM\nnever overrides them; ``narrative`` is null until grounded narration succeeds.",
+  "properties": {
+    "business_impact_input": {
+      "title": "Business Impact Input",
+      "type": "number"
+    },
+    "candidate_causes": {
+      "items": {
+        "$ref": "#/$defs/CandidateCause"
+      },
+      "title": "Candidate Causes",
+      "type": "array"
+    },
+    "confidence": {
+      "title": "Confidence",
+      "type": "number"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "detector": {
+      "title": "Detector",
+      "type": "string"
+    },
+    "detector_version": {
+      "title": "Detector Version",
+      "type": "string"
+    },
+    "deviation": {
+      "title": "Deviation",
+      "type": "number"
+    },
+    "deviation_pct": {
+      "title": "Deviation Pct",
+      "type": "number"
+    },
+    "dimensions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "evidence_ref": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Ref"
+    },
+    "expected_value": {
+      "title": "Expected Value",
+      "type": "number"
+    },
+    "finding_id": {
+      "format": "uuid",
+      "title": "Finding Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/FindingKind"
+    },
+    "metric_key": {
+      "title": "Metric Key",
+      "type": "string"
+    },
+    "narrative": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Narrative"
+    },
+    "narrative_model": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Narrative Model"
+    },
+    "observed_value": {
+      "title": "Observed Value",
+      "type": "number"
+    },
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "score": {
+      "title": "Score",
+      "type": "number"
+    },
+    "severity": {
+      "title": "Severity",
+      "type": "number"
+    },
+    "status": {
+      "default": "open",
+      "enum": [
+        "open",
+        "acknowledged",
+        "resolved",
+        "expired"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "window_end": {
+      "format": "date-time",
+      "title": "Window End",
+      "type": "string"
+    },
+    "window_start": {
+      "format": "date-time",
+      "title": "Window Start",
+      "type": "string"
+    }
+  },
+  "required": [
+    "finding_id",
+    "tenant_id",
+    "kind",
+    "metric_key",
+    "window_start",
+    "window_end",
+    "detector",
+    "detector_version",
+    "observed_value",
+    "expected_value",
+    "deviation",
+    "deviation_pct",
+    "score",
+    "severity",
+    "confidence",
+    "business_impact_input",
+    "created_at"
+  ],
+  "title": "Finding",
+  "type": "object"
+}

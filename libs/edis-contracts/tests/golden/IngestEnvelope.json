@@ -1,0 +1,98 @@
+{
+  "additionalProperties": false,
+  "description": "The one envelope every record entering the bus is wrapped in.\n\n``idempotency_key`` is deterministic and replay-safe; ``trace_context``\ncarries the W3C traceparent so a single record is traceable across all\nseven layers.",
+  "properties": {
+    "anomaly_label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Anomaly Label"
+    },
+    "domain": {
+      "enum": [
+        "sales",
+        "ops",
+        "customer"
+      ],
+      "title": "Domain",
+      "type": "string"
+    },
+    "event_id": {
+      "format": "uuid",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_ts": {
+      "format": "date-time",
+      "title": "Event Ts",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "ingest_ts": {
+      "format": "date-time",
+      "title": "Ingest Ts",
+      "type": "string"
+    },
+    "is_synthetic": {
+      "default": true,
+      "title": "Is Synthetic",
+      "type": "boolean"
+    },
+    "payload": {
+      "additionalProperties": true,
+      "title": "Payload",
+      "type": "object"
+    },
+    "producer": {
+      "default": "ingestion",
+      "title": "Producer",
+      "type": "string"
+    },
+    "schema_ref": {
+      "title": "Schema Ref",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_system": {
+      "title": "Source System",
+      "type": "string"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "trace_context": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Trace Context",
+      "type": "object"
+    }
+  },
+  "required": [
+    "event_id",
+    "idempotency_key",
+    "schema_ref",
+    "domain",
+    "tenant_id",
+    "source_system",
+    "ingest_ts",
+    "event_ts",
+    "payload"
+  ],
+  "title": "IngestEnvelope",
+  "type": "object"
+}

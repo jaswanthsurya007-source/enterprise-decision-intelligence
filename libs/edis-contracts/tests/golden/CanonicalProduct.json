@@ -1,0 +1,127 @@
+{
+  "$defs": {
+    "SourceRef": {
+      "description": "Provenance back-link from a canonical row to a source record.",
+      "properties": {
+        "match_confidence": {
+          "default": 1.0,
+          "title": "Match Confidence",
+          "type": "number"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_system": {
+          "title": "Source System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_system",
+        "source_id",
+        "schema_version"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "description": "SCD-2-shaped product dimension (history is designed-future).",
+  "properties": {
+    "canonical_product_id": {
+      "format": "uuid",
+      "title": "Canonical Product Id",
+      "type": "string"
+    },
+    "category": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Category"
+    },
+    "is_current": {
+      "default": true,
+      "title": "Is Current",
+      "type": "boolean"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "record_hash": {
+      "title": "Record Hash",
+      "type": "string"
+    },
+    "sku": {
+      "title": "Sku",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "uom": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Uom"
+    },
+    "valid_from": {
+      "format": "date-time",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_to": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Valid To"
+    },
+    "version": {
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "canonical_product_id",
+    "tenant_id",
+    "sku",
+    "name",
+    "valid_from",
+    "source_refs",
+    "record_hash"
+  ],
+  "title": "CanonicalProduct",
+  "type": "object"
+}

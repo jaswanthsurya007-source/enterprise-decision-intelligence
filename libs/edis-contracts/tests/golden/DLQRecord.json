@@ -1,0 +1,103 @@
+{
+  "additionalProperties": false,
+  "description": "Dead-letter record for data that failed validation at the ingestion edge.",
+  "properties": {
+    "dlq_id": {
+      "format": "uuid",
+      "title": "Dlq Id",
+      "type": "string"
+    },
+    "domain": {
+      "anyOf": [
+        {
+          "enum": [
+            "sales",
+            "ops",
+            "customer"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Domain"
+    },
+    "error_detail": {
+      "title": "Error Detail",
+      "type": "string"
+    },
+    "error_type": {
+      "title": "Error Type",
+      "type": "string"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "raw": {
+      "default": null,
+      "title": "Raw"
+    },
+    "schema_version": {
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "source_system": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Source System"
+    },
+    "stage": {
+      "default": "ingest",
+      "enum": [
+        "ingest",
+        "integration"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "tenant_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tenant Id"
+    },
+    "trace_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trace Id"
+    }
+  },
+  "required": [
+    "dlq_id",
+    "error_type",
+    "error_detail",
+    "occurred_at"
+  ],
+  "title": "DLQRecord",
+  "type": "object"
+}

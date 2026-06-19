@@ -1,0 +1,89 @@
+{
+  "$defs": {
+    "SourceRef": {
+      "description": "Provenance back-link from a canonical row to a source record.",
+      "properties": {
+        "match_confidence": {
+          "default": 1.0,
+          "title": "Match Confidence",
+          "type": "number"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_system": {
+          "title": "Source System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_system",
+        "source_id",
+        "schema_version"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "description": "A single point written to the TimescaleDB ``metric_observations`` hypertable.",
+  "properties": {
+    "dimensions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "metric_key": {
+      "title": "Metric Key",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "ts": {
+      "format": "date-time",
+      "title": "Ts",
+      "type": "string"
+    },
+    "unit": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Unit"
+    },
+    "value": {
+      "title": "Value",
+      "type": "number"
+    }
+  },
+  "required": [
+    "tenant_id",
+    "metric_key",
+    "ts",
+    "dimensions",
+    "value",
+    "source_refs"
+  ],
+  "title": "MetricObservation",
+  "type": "object"
+}

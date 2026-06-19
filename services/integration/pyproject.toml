@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "edis-integration"
+version = "0.1.0"
+description = "EDIS L2 Data Integration service — Alembic migrations (D1) for the canonical model, the metric_observations TimescaleDB hypertable + daily continuous aggregate, and pgvector embedding columns."
+requires-python = ">=3.12"
+# THIRD-PARTY ONLY. Sibling local packages (edis-contracts, edis-platform) are
+# never listed here — they are not on PyPI; the Makefile/Dockerfile/CI install
+# them with `pip install -e` in dependency order. Import them normally in code.
+dependencies = [
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "greenlet",
+    "alembic>=1.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "testcontainers[postgres]>=4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+# The migrations package is the shippable artifact of this unit.
+packages = ["migrations"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

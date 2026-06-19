@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "SourceRef": {
+      "description": "Provenance back-link from a canonical row to a source record.",
+      "properties": {
+        "match_confidence": {
+          "default": 1.0,
+          "title": "Match Confidence",
+          "type": "number"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_system": {
+          "title": "Source System",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_system",
+        "source_id",
+        "schema_version"
+      ],
+      "title": "SourceRef",
+      "type": "object"
+    }
+  },
+  "description": "Immutable customer-activity fact -- feeds page_views / sessions metrics.",
+  "properties": {
+    "canonical_activity_id": {
+      "format": "uuid",
+      "title": "Canonical Activity Id",
+      "type": "string"
+    },
+    "canonical_customer_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Canonical Customer Id"
+    },
+    "channel": {
+      "anyOf": [
+        {
+          "enum": [
+            "web",
+            "partner",
+            "direct"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Channel"
+    },
+    "event": {
+      "title": "Event",
+      "type": "string"
+    },
+    "event_ts": {
+      "format": "date-time",
+      "title": "Event Ts",
+      "type": "string"
+    },
+    "props": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Props",
+      "type": "object"
+    },
+    "record_hash": {
+      "title": "Record Hash",
+      "type": "string"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    },
+    "source_refs": {
+      "items": {
+        "$ref": "#/$defs/SourceRef"
+      },
+      "title": "Source Refs",
+      "type": "array"
+    },
+    "tenant_id": {
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "canonical_activity_id",
+    "tenant_id",
+    "session_id",
+    "event",
+    "props",
+    "event_ts",
+    "source_refs",
+    "record_hash"
+  ],
+  "title": "CustomerActivity",
+  "type": "object"
+}

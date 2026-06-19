@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "edis-platform"
+version = "0.1.0"
+description = "EDIS platform SDK — settings, logging, OTel, errors, async tenant-scoped DB session, JWT/RBAC authz, and the event-bus abstraction shared by every service."
+requires-python = ">=3.12"
+dependencies = [
+    # settings / validation
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    # database (async)
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "greenlet",
+    # web framework (FastAPI deps + dependency injection used by authz/errors)
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    # event bus (F3 builds bus/*.py on top of these — declared here so F3 never edits this file)
+    "aiokafka>=0.11",
+    "redis>=5.0",
+    # observability
+    "opentelemetry-api>=1.25",
+    "opentelemetry-sdk>=1.25",
+    "opentelemetry-exporter-otlp>=1.25",
+    # auth
+    "pyjwt>=2.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.23",
+    "testcontainers[postgres]>=4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["edis_platform"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

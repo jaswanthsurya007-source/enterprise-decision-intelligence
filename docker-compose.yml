@@ -1,0 +1,344 @@
+# EDIS — one-command dev topology.
+#
+# Infrastructure that the MVP vertical slice needs to run end-to-end:
+#   postgres (TimescaleDB + pgvector) · redis · redpanda (+ console) ·
+#   otel-collector · prometheus · grafana.
+#
+# The EDIS application services (ingestion, integration, intelligence, decision,
+# copilot, governance, gateway, web) are declared under the `apps` profile and are
+# COMMENTED-OUT below: their images are built by later work units (their Dockerfiles
+# do not exist yet). The infra here is enough for `make up && make seed && make demo`
+# once those services land. Bring infra up with `make up`; once app images exist,
+# `docker compose --profile apps up -d` will add them.
+#
+# Docker is NOT required to develop the libraries: every lib/service is importable
+# without a live DB or broker (lazy connections). This file is configuration only.
+
+name: edis
+
+x-restart: &restart
+  restart: unless-stopped
+
+networks:
+  edis:
+    name: edis
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  redpandadata:
+  prometheusdata:
+  grafanadata:
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 + TimescaleDB + pgvector
+  # timescale/timescaledb-ha bundles PG16, the timescaledb extension, AND pgvector,
+  # so one image covers canonical entities, metric hypertables + continuous
+  # aggregates, and embedding columns. Migrations (D1) create the extensions.
+  # ---------------------------------------------------------------------------
+  postgres:
+    <<: *restart
+    image: timescale/timescaledb-ha:pg16.4-ts2.16.1-all
+    container_name: edis-postgres
+    environment:
+      POSTGRES_USER: edis
+      POSTGRES_PASSWORD: edis
+      POSTGRES_DB: edis
+      # timescaledb-ha runs as an HA image; disable the patroni/HA bits for a single dev node.
+      PATRONI_SCOPE: edis-dev
+    command: ["postgres", "-c", "shared_preload_libraries=timescaledb"]
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/home/postgres/pgdata/data
+    networks: [edis]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edis -d edis"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Redis — idempotency SETNX, fact/narrative cache, and Streams fallback bus.
+  # ---------------------------------------------------------------------------
+  redis:
+    <<: *restart
+    image: redis:7.4-alpine
+    container_name: edis-redis
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks: [edis]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # ---------------------------------------------------------------------------
+  # Redpanda — the canonical Kafka-API event backbone.
+  # Single broker, dev-mode, no schema registry needed (contracts live in code).
+  # Internal listener (redpanda:9092) for services on the edis network;
+  # external listener (localhost:19092) matches EDIS_KAFKA_BOOTSTRAP_SERVERS default.
+  # ---------------------------------------------------------------------------
+  redpanda:
+    <<: *restart
+    image: redpandadata/redpanda:v24.2.7
+    container_name: edis-redpanda
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr=internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr=internal://redpanda:8082,external://localhost:18082
+      - --rpc-addr=0.0.0.0:33145
+      - --advertise-rpc-addr=redpanda:33145
+    ports:
+      - "19092:19092"   # Kafka API (external)
+      - "18082:18082"   # PandaProxy (REST) external
+      - "9644:9644"     # Admin API / metrics
+    volumes:
+      - redpandadata:/var/lib/redpanda/data
+    networks: [edis]
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health -X brokers=localhost:9092 | grep -q 'Healthy:.*true'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redpanda-console:
+    <<: *restart
+    image: redpandadata/console:v2.7.2
+    container_name: edis-redpanda-console
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKERS: "redpanda:9092"
+      CONFIG_FILEPATH: ""
+    ports:
+      - "8080:8080"
+    networks: [edis]
+
+  # ---------------------------------------------------------------------------
+  # OpenTelemetry Collector — receives OTLP from every service, exports traces
+  # (debug) and a Prometheus scrape endpoint for metrics.
+  # ---------------------------------------------------------------------------
+  otel-collector:
+    <<: *restart
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    container_name: edis-otel-collector
+    command: ["--config=/etc/otel-collector/config.yaml"]
+    volumes:
+      - ./deploy/otel-collector/config.yaml:/etc/otel-collector/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus exporter (scraped by prometheus)
+      - "13133:13133" # health_check extension
+    networks: [edis]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Prometheus — scrapes the collector's Prometheus exporter + Redpanda.
+  # ---------------------------------------------------------------------------
+  prometheus:
+    <<: *restart
+    image: prom/prometheus:v2.54.1
+    container_name: edis-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    ports:
+      - "9090:9090"
+    networks: [edis]
+    depends_on:
+      otel-collector:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Grafana — dashboards (ingest/DLQ, consumer lag, LLM cost + cache hit, grounding).
+  # Provisioned dashboards (Z2) land under deploy/grafana/dashboards.
+  # ---------------------------------------------------------------------------
+  grafana:
+    <<: *restart
+    image: grafana/grafana:11.2.0
+    container_name: edis-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      # Provisioning + dashboards are added by Z2; mounted read-only when present.
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks: [edis]
+    depends_on:
+      prometheus:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep -q ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # ===========================================================================
+  # EDIS APPLICATION SERVICES (profile: apps) — DEFERRED.
+  #
+  # These images are built by later work units (I*, N*, X*, C*, P*, W1, G1, B*).
+  # Their Dockerfiles do not exist yet, so they are commented out to keep
+  # `docker compose config` valid and `make up` working with infra only.
+  # Each is profile-gated under `apps`; uncomment as the corresponding service
+  # lands, then run `docker compose --profile apps up -d`.
+  #
+  # Shared env every service consumes (note the INTERNAL hostnames — services
+  # talk over the `edis` network, not localhost):
+  #   EDIS_DATABASE_URL=postgresql+asyncpg://edis:edis@postgres:5432/edis
+  #   EDIS_REDIS_URL=redis://redis:6379/0
+  #   EDIS_KAFKA_BOOTSTRAP_SERVERS=redpanda:9092
+  #   EDIS_SINK_BACKEND=kafka
+  #   EDIS_OTEL_ENABLED=true
+  #   EDIS_OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+  # ===========================================================================
+  #
+  # ingestion:                       # L1
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: apps/ingestion/Dockerfile }
+  #   container_name: edis-ingestion
+  #   env_file: [.env]
+  #   environment:
+  #     EDIS_SERVICE_NAME: ingestion
+  #     EDIS_DATABASE_URL: postgresql+asyncpg://edis:edis@postgres:5432/edis
+  #     EDIS_REDIS_URL: redis://redis:6379/0
+  #     EDIS_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+  #     EDIS_SINK_BACKEND: kafka
+  #     EDIS_OTEL_ENABLED: "true"
+  #     EDIS_OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  #   ports: ["8001:8000"]
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redis: { condition: service_healthy }
+  #     redpanda: { condition: service_healthy }
+  #
+  # integration:                     # L2
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: services/integration/Dockerfile }
+  #   container_name: edis-integration
+  #   env_file: [.env]
+  #   environment: { EDIS_SERVICE_NAME: integration }
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redpanda: { condition: service_healthy }
+  #
+  # intelligence:                    # L3
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: services/intelligence/Dockerfile }
+  #   container_name: edis-intelligence
+  #   env_file: [.env]
+  #   environment: { EDIS_SERVICE_NAME: intelligence }
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redpanda: { condition: service_healthy }
+  #
+  # decision:                        # L4
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: services/decision/Dockerfile }
+  #   container_name: edis-decision
+  #   env_file: [.env]
+  #   environment: { EDIS_SERVICE_NAME: decision }
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redpanda: { condition: service_healthy }
+  #
+  # copilot:                         # L5
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: services/copilot/Dockerfile }
+  #   container_name: edis-copilot
+  #   env_file: [.env]
+  #   environment: { EDIS_SERVICE_NAME: copilot }
+  #   ports: ["8005:8000"]
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redis: { condition: service_healthy }
+  #
+  # governance:                      # L7
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: services/governance/Dockerfile }
+  #   container_name: edis-governance
+  #   env_file: [.env]
+  #   environment: { EDIS_SERVICE_NAME: governance }
+  #   ports: ["8007:8000"]
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redpanda: { condition: service_healthy }
+  #
+  # gateway:                         # API Gateway / BFF (frontend edge)
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ., dockerfile: services/gateway/Dockerfile }
+  #   container_name: edis-gateway
+  #   env_file: [.env]
+  #   environment: { EDIS_SERVICE_NAME: gateway }
+  #   ports: ["8000:8000"]
+  #   networks: [edis]
+  #   depends_on:
+  #     postgres: { condition: service_healthy }
+  #     redpanda: { condition: service_healthy }
+  #     copilot: { condition: service_started }
+  #
+  # web:                             # L6 dashboard (static build served by nginx/vite preview)
+  #   <<: *restart
+  #   profiles: ["apps"]
+  #   build: { context: ./apps/web, dockerfile: Dockerfile }
+  #   container_name: edis-web
+  #   ports: ["5173:80"]
+  #   networks: [edis]
+  #   depends_on:
+  #     gateway: { condition: service_started }

@@ -1,0 +1,26 @@
+{
+  "description": "Blended confidence. ``components`` keys: insight, evidence, historical_calibration.",
+  "properties": {
+    "calibration_n": {
+      "default": 0,
+      "title": "Calibration N",
+      "type": "integer"
+    },
+    "components": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Components",
+      "type": "object"
+    },
+    "value": {
+      "title": "Value",
+      "type": "number"
+    }
+  },
+  "required": [
+    "value"
+  ],
+  "title": "ConfidenceScore",
+  "type": "object"
+}

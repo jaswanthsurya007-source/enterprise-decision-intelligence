@@ -1,0 +1,42 @@
+# EDIS pre-commit hooks. Install with `pre-commit install` (or `make precommit`).
+# Mirrors the CI lint gate so drift is caught before push.
+minimum_pre_commit_version: "3.5.0"
+default_language_version:
+  python: python3.12
+
+repos:
+  # --- Ruff: lint + import sort (with autofix) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        name: ruff (lint + autofix)
+        args: ["--fix"]
+      - id: ruff-format
+        name: ruff-format (no-op; black owns formatting)
+        stages: [manual]
+
+  # --- Black: formatter (source of truth for layout) ---
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  # --- Hygiene: end-of-file fixer, trailing whitespace, LF, large files, syntax ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md"]
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-yaml
+        exclude: '^(docker-compose\.ya?ml|deploy/.*\.ya?ml)$'  # custom tags / templating
+      - id: check-toml
+      - id: check-json
+        exclude: '^(.*\.vscode/.*|.*tsconfig.*\.json)$'  # JSON-with-comments

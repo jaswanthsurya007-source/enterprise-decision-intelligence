@@ -1,0 +1,70 @@
+{
+  "additionalProperties": false,
+  "description": "Validated source sales record (currency/timestamps already coerced).",
+  "properties": {
+    "channel": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Channel"
+    },
+    "currency": {
+      "default": "USD",
+      "title": "Currency",
+      "type": "string"
+    },
+    "customer_id": {
+      "title": "Customer Id",
+      "type": "string"
+    },
+    "order_id": {
+      "title": "Order Id",
+      "type": "string"
+    },
+    "order_ts": {
+      "format": "date-time",
+      "title": "Order Ts",
+      "type": "string"
+    },
+    "qty": {
+      "title": "Qty",
+      "type": "integer"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    },
+    "sku": {
+      "title": "Sku",
+      "type": "string"
+    },
+    "unit_price": {
+      "title": "Unit Price",
+      "type": "number"
+    }
+  },
+  "required": [
+    "order_id",
+    "customer_id",
+    "sku",
+    "qty",
+    "unit_price",
+    "order_ts"
+  ],
+  "title": "SalesPayloadV1",
+  "type": "object"
+}

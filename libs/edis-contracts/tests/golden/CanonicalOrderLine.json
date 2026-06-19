@@ -1,0 +1,50 @@
+{
+  "properties": {
+    "canonical_product_id": {
+      "format": "uuid",
+      "title": "Canonical Product Id",
+      "type": "string"
+    },
+    "line_amount_base": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Line Amount Base"
+    },
+    "qty": {
+      "title": "Qty",
+      "type": "integer"
+    },
+    "sku": {
+      "title": "Sku",
+      "type": "string"
+    },
+    "unit_price_base": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Unit Price Base"
+    }
+  },
+  "required": [
+    "canonical_product_id",
+    "sku",
+    "qty",
+    "unit_price_base",
+    "line_amount_base"
+  ],
+  "title": "CanonicalOrderLine",
+  "type": "object"
+}

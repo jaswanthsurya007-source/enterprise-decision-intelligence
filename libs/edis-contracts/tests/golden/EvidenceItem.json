@@ -1,0 +1,58 @@
+{
+  "description": "One computed fact the narrator is permitted to cite.",
+  "properties": {
+    "dimensions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "kind": {
+      "title": "Kind",
+      "type": "string"
+    },
+    "metric_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Metric Key"
+    },
+    "ref": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Ref"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    },
+    "values": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Values",
+      "type": "object"
+    }
+  },
+  "required": [
+    "kind",
+    "summary"
+  ],
+  "title": "EvidenceItem",
+  "type": "object"
+}

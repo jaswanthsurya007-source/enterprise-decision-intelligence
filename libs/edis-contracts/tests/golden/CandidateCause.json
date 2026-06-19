@@ -1,0 +1,58 @@
+{
+  "description": "A lag-adjusted, ranked correlate of an anomaly (RCA output).",
+  "properties": {
+    "contribution_pct": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Contribution Pct"
+    },
+    "correlation": {
+      "title": "Correlation",
+      "type": "number"
+    },
+    "dimensions": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "direction": {
+      "enum": [
+        "leading",
+        "coincident",
+        "lagging"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "lag_minutes": {
+      "title": "Lag Minutes",
+      "type": "integer"
+    },
+    "metric_key": {
+      "title": "Metric Key",
+      "type": "string"
+    },
+    "observed_delta": {
+      "title": "Observed Delta",
+      "type": "number"
+    }
+  },
+  "required": [
+    "metric_key",
+    "correlation",
+    "lag_minutes",
+    "direction",
+    "observed_delta"
+  ],
+  "title": "CandidateCause",
+  "type": "object"
+}

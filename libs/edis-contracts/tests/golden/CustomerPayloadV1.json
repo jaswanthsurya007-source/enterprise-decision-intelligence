@@ -1,0 +1,69 @@
+{
+  "additionalProperties": false,
+  "description": "Validated customer-activity record (feeds page_views / sessions).",
+  "properties": {
+    "channel": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Channel"
+    },
+    "customer_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Customer Id"
+    },
+    "event": {
+      "title": "Event",
+      "type": "string"
+    },
+    "event_ts": {
+      "format": "date-time",
+      "title": "Event Ts",
+      "type": "string"
+    },
+    "props": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Props",
+      "type": "object"
+    },
+    "region": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Region"
+    },
+    "session_id": {
+      "title": "Session Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "session_id",
+    "event",
+    "event_ts"
+  ],
+  "title": "CustomerPayloadV1",
+  "type": "object"
+}

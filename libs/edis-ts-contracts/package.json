@@ -1,0 +1,26 @@
+{
+  "name": "@edis/ts-contracts",
+  "version": "0.1.0",
+  "description": "Zod schemas mirroring the EDIS Pydantic canonical contracts (edis-contracts). CI drift-checks these against the Python JSON Schema goldens.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "drift": "tsx src/__drift__.ts"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "tsx": "^4.16.0",
+    "@types/node": "^22.5.0"
+  }
+}

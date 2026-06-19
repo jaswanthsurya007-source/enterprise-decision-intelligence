@@ -1,0 +1,64 @@
+# OpenTelemetry Collector config for the EDIS dev topology.
+#
+# Receives OTLP (gRPC :4317 / HTTP :4318) traces, metrics, and logs from every
+# EDIS service (each bootstraps its exporter via edis_platform.otel.init_telemetry
+# pointed at http://otel-collector:4317). Metrics are re-exported on :8889 for
+# Prometheus to scrape; traces/logs go to the debug exporter in dev. Swap the
+# debug exporter for OTLP-to-a-backend (Tempo/Jaeger/Loki) in a real deployment.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  # Stamp a deployment.environment for everything that lacks it.
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: dev
+        action: insert
+
+exporters:
+  # Prometheus pulls these app metrics at :8889 (see deploy/prometheus/prometheus.yml).
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+  # Dev sink: print a compact summary of traces/metrics/logs to the collector log.
+  debug:
+    verbosity: normal
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [debug]

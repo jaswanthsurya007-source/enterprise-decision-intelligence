@@ -1,0 +1,105 @@
+# EDIS monorepo — ROOT tooling config only.
+#
+# This is intentionally NOT a build target. Each lib/service is its own hatchling
+# package with its own pyproject.toml; this root file exists solely to give ruff,
+# black, mypy, and pytest a single shared configuration across the whole repo so
+# `make lint`, `make fmt`, and `make test` behave identically everywhere.
+#
+# There is no [build-system] / [project] here on purpose: nothing installs the
+# repo root, and sibling local packages are installed via `pip install -e` in
+# dependency order by the Makefile / CI (never as PyPI deps).
+
+# ---------------------------------------------------------------------------
+# Ruff — lint (and import sorting). Matches the per-package line-length=100.
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    ".venv",
+    "build",
+    "dist",
+    "apps/web",
+    "libs/edis-ts-contracts",
+    "**/migrations/versions",
+    "**/alembic/versions",
+]
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, I isort, UP pyupgrade, B bugbear,
+# C4 comprehensions, ASYNC async pitfalls, SIM simplify, RUF ruff-specific.
+select = ["E", "W", "F", "I", "UP", "B", "C4", "ASYNC", "SIM", "RUF"]
+ignore = [
+    "E501",   # line length handled by the formatter, not the linter
+    "B008",   # FastAPI Depends(...) in defaults is the idiomatic pattern
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["B011", "SIM"]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["edis_contracts", "edis_platform", "edis_gov_sdk"]
+
+# ---------------------------------------------------------------------------
+# Black — formatter (ruff handles imports; black owns layout).
+# ---------------------------------------------------------------------------
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = '''
+/(
+    \.venv
+  | build
+  | dist
+  | apps/web
+  | libs/edis-ts-contracts
+  | .*/migrations/versions
+  | .*/alembic/versions
+)/
+'''
+
+# ---------------------------------------------------------------------------
+# Mypy — type checking the platform libraries (services opt in as they land).
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+check_untyped_defs = true
+namespace_packages = true
+explicit_package_bases = true
+# Third-party packages without type stubs: don't fail the build on them.
+ignore_missing_imports = true
+exclude = '(^|/)(\.venv|build|dist|tests|migrations|alembic)(/|$)'
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# ---------------------------------------------------------------------------
+# Pytest — registers the `integration` marker (Docker-only tests skip without it)
+# and turns on pytest-asyncio auto mode so `async def test_*` needs no decorator.
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = [
+    "libs/edis-contracts/tests",
+    "libs/edis-platform/tests",
+    "libs/edis-governance-sdk/tests",
+    "services",
+]
+# import-mode=importlib lets the monorepo's per-package tests/ dirs (which are NOT
+# Python packages — no __init__.py) coexist without the duplicate-"tests"-package
+# clash that the default prepend mode causes. Test file basenames are unique.
+addopts = "-ra --strict-markers --import-mode=importlib"
+markers = [
+    "integration: tests that require Docker-backed infra (Postgres/Redpanda/Redis). Skipped in CI and on laptops without Docker; run explicitly with `-m integration`.",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

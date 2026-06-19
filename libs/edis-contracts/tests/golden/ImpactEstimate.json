@@ -1,0 +1,56 @@
+{
+  "description": "Estimated business impact of an action, with the auditable inputs used.",
+  "properties": {
+    "direction": {
+      "enum": [
+        "increase",
+        "decrease",
+        "mitigate"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "horizon_days": {
+      "title": "Horizon Days",
+      "type": "integer"
+    },
+    "inputs": {
+      "additionalProperties": {
+        "type": "number"
+      },
+      "title": "Inputs",
+      "type": "object"
+    },
+    "method": {
+      "title": "Method",
+      "type": "string"
+    },
+    "unit": {
+      "title": "Unit",
+      "type": "string"
+    },
+    "value": {
+      "title": "Value",
+      "type": "number"
+    },
+    "value_high": {
+      "title": "Value High",
+      "type": "number"
+    },
+    "value_low": {
+      "title": "Value Low",
+      "type": "number"
+    }
+  },
+  "required": [
+    "value",
+    "value_low",
+    "value_high",
+    "unit",
+    "direction",
+    "horizon_days",
+    "method"
+  ],
+  "title": "ImpactEstimate",
+  "type": "object"
+}
