@@ -40,7 +40,7 @@ jobs:
       - name: Upgrade pip + install tooling
         run: |
           python -m pip install --upgrade pip
-          pip install ruff==0.6.9 black==24.8.0 mypy==1.11.2
+          pip install ruff==0.15.18 black==26.5.1 mypy==1.11.2
 
       - name: Install local packages (dependency order)
         run: |
@@ -111,5 +111,5 @@ jobs:
         run: |
           npm ci
           npm run build
-          # Regenerate from the Pydantic contracts and fail if the working tree drifts.
-          npm run check:drift
+          # Assert the hand-written Zod schemas match the Pydantic source of truth.
+          npm run drift

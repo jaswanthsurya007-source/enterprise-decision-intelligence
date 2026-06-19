@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 600" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+      .t1 { fill:#e2e8f0; } .t2 { fill:#94a3b8; } .t3 { fill:#64748b; }
+      .red { fill:#f87171; } .amber { fill:#fbbf24; } .green { fill:#34d399; } .teal { fill:#2dd4bf; }
+    </style>
+  </defs>
+
+  <!-- canvas -->
+  <rect x="0" y="0" width="1040" height="600" rx="14" fill="#0b1220"/>
+
+  <!-- header -->
+  <text x="24" y="34" class="t1" font-size="20" font-weight="700">EDIS<tspan class="t3" font-weight="400" font-size="13">  · Enterprise Decision Intelligence</tspan></text>
+  <rect x="812" y="18" width="118" height="24" rx="12" fill="#0f1c33" stroke="#1e2a44"/>
+  <text x="826" y="34" class="t2 mono" font-size="12">tenant: acme</text>
+  <circle cx="952" cy="30" r="4" class="green"/>
+  <text x="962" y="34" class="green" font-size="12">live</text>
+  <line x1="24" y1="52" x2="1016" y2="52" stroke="#1a2540"/>
+
+  <!-- KPI tiles -->
+  <g>
+    <!-- tile 1 revenue (critical) -->
+    <rect x="24" y="68" width="236" height="92" rx="10" fill="#111c30" stroke="#3b1d22"/>
+    <rect x="24" y="68" width="4" height="92" rx="2" fill="#f87171"/>
+    <text x="44" y="92" class="t2" font-size="12">Revenue (daily)</text>
+    <text x="44" y="124" class="t1 mono" font-size="28" font-weight="700">$385K</text>
+    <text x="44" y="146" class="red" font-size="13">▼ 8.3% WoW</text>
+
+    <!-- tile 2 orders -->
+    <rect x="276" y="68" width="236" height="92" rx="10" fill="#111c30" stroke="#1e2a44"/>
+    <text x="296" y="92" class="t2" font-size="12">Orders</text>
+    <text x="296" y="124" class="t1 mono" font-size="28" font-weight="700">4,120</text>
+    <text x="296" y="146" class="amber" font-size="13">▼ 5.0%</text>
+
+    <!-- tile 3 error rate (critical) -->
+    <rect x="528" y="68" width="236" height="92" rx="10" fill="#111c30" stroke="#3b1d22"/>
+    <rect x="528" y="68" width="4" height="92" rx="2" fill="#f87171"/>
+    <text x="548" y="92" class="t2" font-size="12">Checkout error rate · EMEA</text>
+    <text x="548" y="124" class="t1 mono" font-size="28" font-weight="700">9.0%</text>
+    <text x="548" y="146" class="red" font-size="13">▲ from 0.4%</text>
+
+    <!-- tile 4 latency (critical) -->
+    <rect x="780" y="68" width="236" height="92" rx="10" fill="#111c30" stroke="#3b1d22"/>
+    <rect x="780" y="68" width="4" height="92" rx="2" fill="#f87171"/>
+    <text x="800" y="92" class="t2" font-size="12">Checkout p95 · EMEA</text>
+    <text x="800" y="124" class="t1 mono" font-size="28" font-weight="700">1,400ms</text>
+    <text x="800" y="146" class="red" font-size="13">▲ from 180ms</text>
+  </g>
+
+  <!-- anomaly feed -->
+  <rect x="24" y="176" width="492" height="196" rx="10" fill="#0f1a2e" stroke="#1e2a44"/>
+  <text x="44" y="202" class="t1" font-size="14" font-weight="600">⚠  Anomaly feed</text>
+  <line x1="44" y1="214" x2="496" y2="214" stroke="#1a2540"/>
+
+  <circle cx="52" cy="238" r="4" class="red"/>
+  <text x="68" y="242" class="t1" font-size="13" font-weight="600">EMEA · web · revenue   <tspan class="red">−35.8%</tspan>   <tspan class="t3 mono" font-size="11">(5.8σ level shift)</tspan></text>
+  <text x="68" y="260" class="t2" font-size="12">→ root cause: <tspan class="teal">checkout-api latency</tspan> · lag 2h · corr 0.94</text>
+
+  <circle cx="52" cy="294" r="4" class="amber"/>
+  <text x="68" y="298" class="t2" font-size="13">EMEA · checkout-api · latency_p95   <tspan class="t1 mono">180 → 1,400 ms</tspan></text>
+
+  <circle cx="52" cy="328" r="4" class="amber"/>
+  <text x="68" y="332" class="t2" font-size="13">EMEA · checkout-api · error_rate   <tspan class="t1 mono">0.4% → 9.0%</tspan></text>
+
+  <text x="44" y="360" class="t3" font-size="11">NA · APAC · LATAM — nominal · isolated to EMEA web</text>
+
+  <!-- recommendation -->
+  <rect x="528" y="176" width="488" height="196" rx="10" fill="#0f1a2e" stroke="#234038"/>
+  <text x="548" y="202" class="green" font-size="14" font-weight="600">✓  Recommended action</text>
+  <rect x="930" y="188" width="74" height="20" rx="10" fill="#10241c" stroke="#234038"/>
+  <text x="942" y="202" class="green" font-size="11" font-weight="600">priority #1</text>
+  <line x1="548" y1="214" x2="1000" y2="214" stroke="#1a2540"/>
+
+  <text x="548" y="240" class="t1" font-size="15" font-weight="600">Mitigate checkout-api latency in EMEA</text>
+  <text x="548" y="260" class="t2" font-size="12">Likely deploy regression — roll back / scale the failing service.</text>
+
+  <text x="548" y="294" class="t3" font-size="11">EST. RECOVERY</text>
+  <text x="548" y="318" class="t1 mono" font-size="22" font-weight="700">~$170K<tspan class="t3" font-size="12" font-weight="400"> / 5 days</tspan></text>
+
+  <text x="760" y="294" class="t3" font-size="11">CONFIDENCE</text>
+  <rect x="760" y="304" width="240" height="8" rx="4" fill="#1e2a44"/>
+  <rect x="760" y="304" width="202" height="8" rx="4" class="teal" fill="#2dd4bf"/>
+  <text x="760" y="330" class="teal mono" font-size="13">0.84</text>
+
+  <rect x="548" y="338" width="92" height="24" rx="6" fill="#10241c" stroke="#234038"/>
+  <text x="568" y="354" class="green" font-size="12" font-weight="600">Accept</text>
+  <rect x="650" y="338" width="92" height="24" rx="6" fill="#1a1320" stroke="#3b1d22"/>
+  <text x="672" y="354" class="red" font-size="12" font-weight="600">Reject</text>
+  <text x="760" y="354" class="t3" font-size="11">▸ why? — full evidence trail</text>
+
+  <!-- forecast chart -->
+  <rect x="24" y="388" width="992" height="188" rx="10" fill="#0f1a2e" stroke="#1e2a44"/>
+  <text x="44" y="414" class="t1" font-size="14" font-weight="600">Forecast — EMEA web revenue <tspan class="t3" font-size="11">(actual vs. predicted band)</tspan></text>
+  <!-- band -->
+  <path d="M 60 470 L 980 452 L 980 500 L 60 510 Z" fill="#14283f" opacity="0.7"/>
+  <path d="M 60 490 L 980 476" stroke="#334866" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+  <!-- actual line: stable then drops below band at incident -->
+  <polyline points="60,486 180,482 300,490 420,484 540,492 620,520 720,536 820,540 920,532 980,524"
+            fill="none" stroke="#2dd4bf" stroke-width="2.5"/>
+  <!-- incident marker -->
+  <line x1="600" y1="430" x2="600" y2="560" stroke="#f87171" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+  <text x="606" y="444" class="red" font-size="11">incident — Jun 12</text>
+  <circle cx="720" cy="536" r="4" class="red"/>
+  <text x="700" y="448" class="t3" font-size="11">actual diverges below the predicted band</text>
+</svg>

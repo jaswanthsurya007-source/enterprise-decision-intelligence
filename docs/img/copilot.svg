@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 380" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+      .t1 { fill:#e2e8f0; } .t2 { fill:#cbd5e1; } .t3 { fill:#64748b; }
+      .red { fill:#f87171; } .teal { fill:#2dd4bf; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1040" height="380" rx="14" fill="#0b1220"/>
+  <text x="24" y="34" class="t1" font-size="15" font-weight="700">💬  Copilot <tspan class="t3" font-weight="400" font-size="12">· grounded — every number traces to a computed fact</tspan></text>
+  <line x1="24" y1="48" x2="1016" y2="48" stroke="#1a2540"/>
+
+  <!-- user bubble -->
+  <rect x="624" y="64" width="392" height="40" rx="10" fill="#13233d"/>
+  <text x="644" y="89" class="t2" font-size="13">Why did revenue drop last week?</text>
+
+  <!-- assistant answer -->
+  <rect x="24" y="120" width="992" height="236" rx="10" fill="#0f1a2e" stroke="#1e2a44"/>
+  <circle cx="44" cy="146" r="9" fill="#10241c" stroke="#234038"/>
+  <text x="40" y="150" class="teal" font-size="11">AI</text>
+
+  <text x="64" y="150" class="t1" font-size="13"><tspan font-weight="600">Revenue fell 8.3% week-over-week</tspan> ($420K → $385K daily avg). <tspan class="teal mono" font-size="11">[1]</tspan></text>
+  <text x="64" y="176" class="t2" font-size="13">The drop is concentrated in <tspan class="t1" font-weight="600">EMEA web revenue, down 35.8%</tspan> ($95K → $61K/day) from Jun 12 — a 5.8σ deviation. <tspan class="teal mono" font-size="11">[2]</tspan></text>
+  <text x="64" y="206" class="t2" font-size="13"><tspan class="t1" font-weight="600">Root cause (high confidence):</tspan> a checkout-api availability regression in EMEA — latency p95</text>
+  <text x="64" y="226" class="t2" font-size="13">spiked ~180ms → <tspan class="t1 mono">1,400ms</tspan> and errors 0.4% → <tspan class="t1 mono">9%</tspan> ~2h before the decline (~71% of impact). <tspan class="teal mono" font-size="11">[3]</tspan></text>
+  <text x="64" y="256" class="t2" font-size="13"><tspan class="t1" font-weight="600">Recommended action (#1):</tspan> mitigate the checkout-api latency — est. recovery <tspan class="t1 mono">~$170K</tspan> / 5 days, conf 0.84. <tspan class="teal mono" font-size="11">[4]</tspan></text>
+
+  <!-- citation chips -->
+  <line x1="64" y1="280" x2="992" y2="280" stroke="#1a2540"/>
+  <text x="64" y="302" class="t3" font-size="11">GROUNDED FACTS</text>
+  <g font-size="11">
+    <rect x="64" y="312" width="186" height="26" rx="13" fill="#0f1c33" stroke="#234a44"/>
+    <text x="78" y="329" class="teal mono">[1]</text><text x="100" y="329" class="t2">metric_lookup · revenue</text>
+    <rect x="262" y="312" width="186" height="26" rx="13" fill="#0f1c33" stroke="#234a44"/>
+    <text x="276" y="329" class="teal mono">[2]</text><text x="298" y="329" class="t2">find_anomalies · f-7a3…</text>
+    <rect x="460" y="312" width="208" height="26" rx="13" fill="#0f1c33" stroke="#234a44"/>
+    <text x="474" y="329" class="teal mono">[3]</text><text x="496" y="329" class="t2">candidate_causes · latency</text>
+    <rect x="680" y="312" width="220" height="26" rx="13" fill="#0f1c33" stroke="#234a44"/>
+    <text x="694" y="329" class="teal mono">[4]</text><text x="716" y="329" class="t2">semantic_search · r-91c…</text>
+  </g>
+</svg>

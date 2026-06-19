@@ -286,17 +286,18 @@ from the default selection, so the suite passes on a laptop with neither Docker 
 
 ---
 
-## Screenshots
+## UI preview
 
-> _Placeholders — drop images into `docs/img/` and they render here._
+The real-time operations cockpit — live KPIs, an anomaly feed with root-cause drill-in, the
+prioritized recommendation with confidence + explainability, and the grounded copilot. Run the
+stack (`make up`) for the live React app at `localhost:5173`.
 
-| Overview dashboard | Copilot answer |
-|---|---|
-| ![Overview dashboard](docs/img/overview.png) | ![Copilot grounded answer](docs/img/copilot.png) |
+> _Representative previews of the running dashboard (the live UI is built in `apps/web` —
+> React + Vite + Tailwind + Recharts, driven by the gateway's REST + SSE)._
 
-| Anomaly + RCA drill-in | Grafana observability |
-|---|---|
-| ![Anomaly RCA](docs/img/anomaly-rca.png) | ![Grafana](docs/img/grafana.png) |
+![EDIS dashboard — overview](docs/img/dashboard-overview.svg)
+
+![EDIS copilot — grounded answer with citations](docs/img/copilot.svg)
 
 ---
 

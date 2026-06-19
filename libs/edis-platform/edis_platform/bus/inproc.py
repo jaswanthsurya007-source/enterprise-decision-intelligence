@@ -44,7 +44,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from pydantic import BaseModel
 
@@ -164,15 +164,17 @@ class InProcMessageSource(MessageSource):
             }
             try:
                 while not stopped.is_set():
+                    waiters: set[asyncio.Future[Any]] = {*get_tasks, stop_task}
                     done, _ = await asyncio.wait(
-                        [*get_tasks, stop_task],
+                        waiters,
                         return_when=asyncio.FIRST_COMPLETED,
                     )
-                    if stop_task in done:
+                    if stop_task.done():
                         break
-                    for task in list(done):
-                        if task is stop_task:
+                    for fut in done:
+                        if fut is stop_task:
                             continue
+                        task = cast("asyncio.Task[Message]", fut)
                         queue = get_tasks.pop(task)
                         message = task.result()
                         # Re-arm this queue before yielding so concurrent publishes
