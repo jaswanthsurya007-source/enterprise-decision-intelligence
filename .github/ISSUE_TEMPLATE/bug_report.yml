@@ -1,0 +1,58 @@
+name: Bug report
+description: Something isn't behaving the way the README or the code says it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The more reproducible this is, the faster I can look at it.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+      description: A short description of the actual vs. expected behaviour.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The exact commands or actions. A failing test or a minimal snippet is ideal.
+      placeholder: |
+        1. make install
+        2. make test
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: how-running
+    attributes:
+      label: How are you running it?
+      options:
+        - Offline (make test — no Docker, no keys)
+        - Full local stack (make up + the services)
+        - With API keys (Claude / Voyage)
+        - Other (describe below)
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Python / Node versions, and anything else relevant.
+      placeholder: "Windows 11 (Git Bash), Python 3.12.x, Node 20.x"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: Relevant traceback or console output. Paste as text, not a screenshot, where you can.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: This isn't one of the documented "designed but not built yet" gaps (see *What's built, what isn't* in the README).
+          required: true

@@ -1,0 +1,31 @@
+name: Idea or change proposal
+description: Suggest a change, an improvement, or something to build out.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Up front: EDIS is a deliberate vertical slice, so not every idea fits — a lot is intentionally
+        left as a designed-but-stubbed seam. That's fine; it's worth raising anyway. I'd just rather
+        talk it through here before either of us writes code.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem or the gap?
+      description: Lead with the problem you're trying to solve, not the solution. What's missing or awkward today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What did you have in mind?
+      description: How you'd approach it, if you have a view. Rough is fine.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you file
+      options:
+        - label: I've read *What's built, what isn't* in the README, and (if relevant) the roadmap in docs/ARCHITECTURE.md §10.
+          required: true
+        - label: I searched existing issues for the same idea.
+          required: true
